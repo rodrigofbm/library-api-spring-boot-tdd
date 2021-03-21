@@ -1,5 +1,6 @@
 package br.com.rodrigo.services.impl;
 
+import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
 import br.com.rodrigo.model.repositories.BookRepository;
@@ -16,6 +17,9 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Book save(Book book) {
+        if(bookRepository.existsByIsbn(book.getIsbn())){
+            throw new BusinessRuleException("ISBN already exists.");
+        }
         return bookRepository.save(book);
     }
 }

@@ -1,9 +1,9 @@
 package br.com.rodrigo.controllers;
 
 import br.com.rodrigo.DTOs.BookDTO;
+import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -73,8 +73,32 @@ public class BookControllerTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json);
 
+        // acao/verificacao
         mvc.perform(request)
             .andExpect(MockMvcResultMatchers.status().isBadRequest())
             .andExpect(MockMvcResultMatchers.jsonPath("errors", Matchers.hasSize(3)));
+    }
+
+    @Test
+    @DisplayName("Should Not Create Book With Duplicated ISBN")
+    public void shouldNotCreateBookWithDuplicatedISBN() throws Exception {
+        // cenario
+        BookDTO bookDTO = BookDTO.builder().author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        String json = new ObjectMapper().writeValueAsString(bookDTO);
+
+        BDDMockito.given(bookService.save(Mockito.any(Book.class))).
+                willThrow(new BusinessRuleException("ISBN already exists"));
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.post(BOOK_API)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json);
+
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("errors", Matchers.hasSize(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("errors[0]")
+                        .value("ISBN already exists"));
     }
 }

@@ -2,6 +2,7 @@ package br.com.rodrigo.controllers;
 
 import br.com.rodrigo.DTOs.BookDTO;
 import br.com.rodrigo.exceptions.ApiErrors;
+import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
 import org.modelmapper.ModelMapper;
@@ -37,5 +38,13 @@ public class BookController {
         BindingResult bindingResult = ex.getBindingResult();
 
         return new ResponseEntity<>(new ApiErrors(bindingResult), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ApiErrors> handleBusinessRuleException(BusinessRuleException ex) {
+
+        return new ResponseEntity<>(
+                new ApiErrors(new BusinessRuleException("ISBN already exists")),
+                HttpStatus.BAD_REQUEST);
     }
 }
