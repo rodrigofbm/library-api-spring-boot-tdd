@@ -22,6 +22,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.util.MultiValueMap;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -100,5 +106,57 @@ public class BookControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("errors", Matchers.hasSize(1)))
                 .andExpect(MockMvcResultMatchers.jsonPath("errors[0]")
                         .value("ISBN already exists"));
+    }
+
+    @Test
+    @DisplayName("Should return a empty list of Books")
+    public void shouldReturnEmptyListOfBooks() throws Exception {
+        // acao/verificacao
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        mvc.perform(request)
+            .andExpect(MockMvcResultMatchers.status().isOk())
+            .andExpect(MockMvcResultMatchers.jsonPath("books").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should return a not empty list of Books")
+    public void shouldReturnNotEmptyListOfBooks() throws Exception {
+        // cenario
+        Book book1 = Book.builder().id(1L).author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        Book book2 = Book.builder().id(2L).author("Frank Miller").isbn("123458")
+                .title("The Dark Knight Rises").build();
+
+        BDDMockito.given(bookService.findAll()).willReturn(Arrays.asList(book1, book2));
+
+        // acao/verificacao
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("books").isNotEmpty())
+                .andExpect(MockMvcResultMatchers.jsonPath("books", Matchers.hasSize(2)))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[0].id")
+                        .value(1L))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[0].title")
+                        .value("The Dark Knight"))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[0].author")
+                        .value("Frank Miller"))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[0].isbn")
+                        .value("123456"))
+
+                .andExpect(MockMvcResultMatchers.jsonPath("books[1].id")
+                        .value(2L))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[1].title")
+                        .value("The Dark Knight Rises"))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[1].author")
+                        .value("Frank Miller"))
+                .andExpect(MockMvcResultMatchers.jsonPath("books[1].isbn")
+                        .value("123458"));
     }
 }

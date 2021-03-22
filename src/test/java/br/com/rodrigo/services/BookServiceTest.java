@@ -15,6 +15,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Arrays;
+import java.util.List;
+
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 public class BookServiceTest {
@@ -61,5 +64,44 @@ public class BookServiceTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessage("ISBN already exists.");
         Mockito.verify(bookRepository, Mockito.never()).save(book);
+    }
+
+    @Test
+    @DisplayName("Should return a empty list of books")
+    public void shouldReturnEmptyListOfBooks() {
+        // cenario
+        Mockito.when(bookRepository.findAll()).thenReturn(Arrays.asList());
+
+        // acao
+        List<Book> books = bookService.findAll();
+
+        // verificacao
+        Assertions.assertThat(books).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should return a list of books")
+    public void shouldReturnListOfBooks() {
+        // cenario
+        Book book1 = Book.builder().id(1L).author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        Book book2 = Book.builder().id(2L).author("Frank Miller").isbn("123458")
+                .title("The Dark Knight Rises").build();
+        Mockito.when(bookRepository.findAll()).thenReturn(Arrays.asList(book1, book2));
+
+        // acao
+        List<Book> books = bookService.findAll();
+
+        // verificacao
+        Assertions.assertThat(books).hasSize(2);
+        Assertions.assertThat(books.get(0).getId()).isEqualTo(1L);
+        Assertions.assertThat(books.get(0).getTitle()).isEqualTo("The Dark Knight");
+        Assertions.assertThat(books.get(0).getAuthor()).isEqualTo("Frank Miller");
+        Assertions.assertThat(books.get(0).getIsbn()).isEqualTo("123456");
+
+        Assertions.assertThat(books.get(1).getId()).isEqualTo(2L);
+        Assertions.assertThat(books.get(1).getTitle()).isEqualTo("The Dark Knight Rises");
+        Assertions.assertThat(books.get(1).getAuthor()).isEqualTo("Frank Miller");
+        Assertions.assertThat(books.get(1).getIsbn()).isEqualTo("123458");
     }
 }

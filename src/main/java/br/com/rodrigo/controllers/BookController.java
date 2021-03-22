@@ -1,6 +1,7 @@
 package br.com.rodrigo.controllers;
 
 import br.com.rodrigo.DTOs.BookDTO;
+import br.com.rodrigo.arguments.book.GetBookResponse;
 import br.com.rodrigo.exceptions.ApiErrors;
 import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/books")
@@ -31,6 +34,14 @@ public class BookController {
         entity = bookService.save(entity);
 
         return new ResponseEntity(mapper.map(entity, BookDTO.class), HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<GetBookResponse> get() {
+        List<Book> books = bookService.findAll();
+        List<BookDTO> dtos = Arrays.asList(mapper.map(books, BookDTO[].class));
+
+        return new ResponseEntity<>(new GetBookResponse(dtos), HttpStatus.OK);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -6,6 +6,8 @@ import br.com.rodrigo.services.BookService;
 import br.com.rodrigo.model.repositories.BookRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class BookServiceImpl implements BookService {
 
@@ -21,5 +23,12 @@ public class BookServiceImpl implements BookService {
             throw new BusinessRuleException("ISBN already exists.");
         }
         return bookRepository.save(book);
+    }
+
+    @Override
+    public List<Book> findAll() {
+        List<Book> books = bookRepository.findAll();
+
+        return books;
     }
 }
