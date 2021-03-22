@@ -12,11 +12,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -103,5 +109,61 @@ public class BookServiceTest {
         Assertions.assertThat(books.get(1).getTitle()).isEqualTo("The Dark Knight Rises");
         Assertions.assertThat(books.get(1).getAuthor()).isEqualTo("Frank Miller");
         Assertions.assertThat(books.get(1).getIsbn()).isEqualTo("123458");
+    }
+
+    @Test
+    @DisplayName("Should Return BadRequest GetById")
+    public void shouldReturnBadRequestGetById() {
+        // cenario
+        Mockito.when(bookRepository.findById(Mockito.any(Long.class)))
+                .thenThrow(ResponseStatusException.class);
+
+        // acao
+        Throwable response = Assertions.catchThrowable(() -> {
+            Book book = bookService.findById(null).get();
+        });
+
+        //verificacao
+        Assertions.assertThat(response)
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessage("400 BAD_REQUEST \"id is required\"");
+    }
+
+    @Test
+    @DisplayName("Should Return NotFound GetById")
+    public void shouldReturnNotFoundGetById() {
+        // cenario
+        Mockito.when(bookRepository.findById(Mockito.any(Long.class)))
+                .thenReturn(Optional.empty());
+
+        // acao
+        Throwable response = Assertions.catchThrowable(() -> {
+            Book book = bookService.findById(1L).get();
+        });
+
+        //verificacao
+        Assertions.assertThat(response)
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessage("404 NOT_FOUND \"Book not found\"");
+    }
+
+    @Test
+    @DisplayName("Should Return Book ById")
+    public void shouldReturnBookById() {
+        // cenario
+        Book book = Book.builder().id(1L).isbn("123456").title("The Dark Knight").author("Frank Miller")
+                .build();
+        Mockito.when(bookRepository.findById(1L))
+                .thenReturn(Optional.of(book));
+
+        // acao
+        book = bookService.findById(1L).get();
+
+        //verificacao
+        Assertions.assertThat(book).isNotNull();
+        Assertions.assertThat(book.getId()).isEqualTo(1L);
+        Assertions.assertThat(book.getAuthor()).isEqualTo("Frank Miller");
+        Assertions.assertThat(book.getTitle()).isEqualTo("The Dark Knight");
+        Assertions.assertThat(book.getIsbn()).isEqualTo("123456");
     }
 }

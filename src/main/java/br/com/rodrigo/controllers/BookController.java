@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.Arrays;
@@ -36,8 +37,15 @@ public class BookController {
         return new ResponseEntity(mapper.map(entity, BookDTO.class), HttpStatus.CREATED);
     }
 
+    @GetMapping("{id}")
+    public ResponseEntity<BookDTO> get(@PathVariable Long id) {
+        return bookService.findById(id)
+                .map(b ->  ResponseEntity.ok(mapper.map(b, BookDTO.class)))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
     @GetMapping
-    public ResponseEntity<GetBookResponse> get() {
+    public ResponseEntity<GetBookResponse> getAll() {
         List<Book> books = bookService.findAll();
         List<BookDTO> dtos = Arrays.asList(mapper.map(books, BookDTO[].class));
 

@@ -13,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -85,5 +86,34 @@ public class BookRepositoryTest {
         Assertions.assertThat(books.get(1).getTitle()).isEqualTo("The Dark Knight Rises");
         Assertions.assertThat(books.get(1).getAuthor()).isEqualTo("Frank Miller");
         Assertions.assertThat(books.get(1).getIsbn()).isEqualTo("123458");
+    }
+
+    @Test
+    @DisplayName("Should return not found book")
+    public void shouldReturnNotFoundBook() {
+        // acao
+        Optional<Book> book = bookRepository.findById(Mockito.any(Long.class));
+
+        // verificacao
+        Assertions.assertThat(book).isEqualTo(Optional.empty());
+    }
+
+    @Test
+    @DisplayName("Should a book")
+    public void shouldReturnBook() {
+        // cenario
+        Long id = 1L;
+        Book book = Book.builder().author("Frank Miller").title("The Dark Knight").isbn("123456").build();
+        entityManager.persist(book);
+
+        // acao
+        Optional<Book> response = bookRepository.findById(id);
+
+        // verificacao
+        Assertions.assertThat(response.isPresent()).isTrue();
+        Assertions.assertThat(response.get().getId()).isEqualTo(1L);
+        Assertions.assertThat(response.get().getTitle()).isEqualTo("The Dark Knight");
+        Assertions.assertThat(response.get().getAuthor()).isEqualTo("Frank Miller");
+        Assertions.assertThat(response.get().getIsbn()).isEqualTo("123456");
     }
 }

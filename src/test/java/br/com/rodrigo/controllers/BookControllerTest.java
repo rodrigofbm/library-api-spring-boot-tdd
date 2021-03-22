@@ -24,10 +24,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.util.MultiValueMap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -158,5 +155,37 @@ public class BookControllerTest {
                         .value("Frank Miller"))
                 .andExpect(MockMvcResultMatchers.jsonPath("books[1].isbn")
                         .value("123458"));
+    }
+
+    @Test
+    @DisplayName("Should return not found book")
+    public void shouldReturnNotFoundBook() throws Exception{
+        // cenario
+        BDDMockito.given(bookService.findById(BDDMockito.any(Long.class)))
+                .willReturn(Optional.empty());
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API + "/1")
+                .accept(MediaType.APPLICATION_JSON);
+
+        // acao/verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should return a book")
+    public void shouldReturnBook() throws Exception{
+        // cenario
+        Book book = Book.builder().id(1L).author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        BDDMockito.given(bookService.findById(1L))
+                .willReturn(Optional.of(book));
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API + "/1")
+                .accept(MediaType.APPLICATION_JSON);
+
+        // acao/verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isOk());
     }
 }
