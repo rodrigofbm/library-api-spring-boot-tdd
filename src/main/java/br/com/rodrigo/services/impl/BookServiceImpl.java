@@ -41,7 +41,12 @@ public class BookServiceImpl implements BookService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id is required");
         }
 
-        return bookRepository.findById(id).map(book -> Optional.of(book))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
+        return bookRepository.findById(id);
+    }
+
+    @Override
+    public Void delete(Long id) {
+        this.findById(id);
+        return null;
     }
 }

@@ -92,7 +92,7 @@ public class BookRepositoryTest {
     @DisplayName("Should return not found book")
     public void shouldReturnNotFoundBook() {
         // acao
-        Optional<Book> book = bookRepository.findById(Mockito.any(Long.class));
+        Optional<Book> book = bookRepository.findById(Mockito.anyLong());
 
         // verificacao
         Assertions.assertThat(book).isEqualTo(Optional.empty());
@@ -115,5 +115,21 @@ public class BookRepositoryTest {
         Assertions.assertThat(response.get().getTitle()).isEqualTo("The Dark Knight");
         Assertions.assertThat(response.get().getAuthor()).isEqualTo("Frank Miller");
         Assertions.assertThat(response.get().getIsbn()).isEqualTo("123456");
+    }
+
+    @Test
+    @DisplayName("Should Delete a Book")
+    public void shouldDeleteBook() {
+        // cenario
+        Book book = Book.builder().author("Frank Miller").title("The Dark Knight").isbn("123456").build();
+        Long id = entityManager.persistAndGetId(book, Long.class);
+
+        // acao
+        bookRepository.deleteById(id);
+
+        // verificacao
+        entityManager.flush();
+        Book after = entityManager.find(Book.class, id);
+        Assertions.assertThat(after).isNull();
     }
 }

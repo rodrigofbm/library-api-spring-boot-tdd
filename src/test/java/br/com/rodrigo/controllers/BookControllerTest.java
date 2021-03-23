@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -161,7 +163,7 @@ public class BookControllerTest {
     @DisplayName("Should return not found book")
     public void shouldReturnNotFoundBook() throws Exception{
         // cenario
-        BDDMockito.given(bookService.findById(BDDMockito.any(Long.class)))
+        BDDMockito.given(bookService.findById(BDDMockito.anyLong()))
                 .willReturn(Optional.empty());
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API + "/1")
@@ -187,5 +189,51 @@ public class BookControllerTest {
         // acao/verificacao
         mvc.perform(request)
                 .andExpect(MockMvcResultMatchers.status().isOk());
+    }
+
+    @Test
+    @DisplayName("Should Return BadRequest On Delete Passing No Id")
+    public void shouldReturnBadRequestOnDeletePassingNoId() throws Exception {
+        // acao
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .delete(BOOK_API)
+                .accept(MediaType.APPLICATION_JSON);
+
+        // verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().is(405));
+    }
+
+    @Test
+    @DisplayName("Should Return NotFound Book On Delete")
+    public void shouldReturnNotFoundBookOnDelete() throws Exception {
+        // cenario
+        BDDMockito.given(bookService.findById(BDDMockito.anyLong()))
+                .willReturn(Optional.empty());
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .delete(BOOK_API + "/1");
+
+        // acao/verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should Return NoContent On Delete Success")
+    public void shouldReturnNoContentOnDeleteSuccess() throws Exception {
+        Book book = Book.builder().id(1L).author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        BDDMockito.given(bookService.findById(BDDMockito.anyLong()))
+                .willReturn(Optional.of(book));
+
+        // acao
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .delete(BOOK_API + "/1")
+                .accept(MediaType.APPLICATION_JSON);
+
+        // verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 }

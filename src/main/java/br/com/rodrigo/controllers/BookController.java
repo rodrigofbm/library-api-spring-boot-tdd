@@ -52,6 +52,14 @@ public class BookController {
         return new ResponseEntity<>(new GetBookResponse(dtos), HttpStatus.OK);
     }
 
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        Book foundedBook = bookService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        return new ResponseEntity<>(bookService.delete(foundedBook.getId()), HttpStatus.NO_CONTENT);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrors> handleValidationExceptions(MethodArgumentNotValidException ex) {
         BindingResult bindingResult = ex.getBindingResult();

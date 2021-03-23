@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
+import org.mockito.internal.matchers.InstanceOf;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -115,7 +117,7 @@ public class BookServiceTest {
     @DisplayName("Should Return BadRequest GetById")
     public void shouldReturnBadRequestGetById() {
         // cenario
-        Mockito.when(bookRepository.findById(Mockito.any(Long.class)))
+        Mockito.when(bookRepository.findById(Mockito.anyLong()))
                 .thenThrow(ResponseStatusException.class);
 
         // acao
@@ -133,18 +135,14 @@ public class BookServiceTest {
     @DisplayName("Should Return NotFound GetById")
     public void shouldReturnNotFoundGetById() {
         // cenario
-        Mockito.when(bookRepository.findById(Mockito.any(Long.class)))
+        Mockito.when(bookRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.empty());
 
         // acao
-        Throwable response = Assertions.catchThrowable(() -> {
-            Book book = bookService.findById(1L).get();
-        });
+        Optional<Book> book = bookService.findById(1L);
 
         //verificacao
-        Assertions.assertThat(response)
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessage("404 NOT_FOUND \"Book not found\"");
+        Assertions.assertThat(book).isNotPresent();
     }
 
     @Test
@@ -165,5 +163,22 @@ public class BookServiceTest {
         Assertions.assertThat(book.getAuthor()).isEqualTo("Frank Miller");
         Assertions.assertThat(book.getTitle()).isEqualTo("The Dark Knight");
         Assertions.assertThat(book.getIsbn()).isEqualTo("123456");
+    }
+
+    @Test
+    @DisplayName("Should Return NotFound Book On Delete By Id")
+    public void shouldReturnNotFoundBookOnDeleteById() {
+        // cenario
+        Mockito.when(bookService.findById(Mockito.anyLong()))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+        // acao
+        Throwable response = Assertions.catchThrowable(() -> {
+            bookService.delete(1L);
+        });
+
+        //verificacao
+        Assertions.assertThat(response)
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessage("404 NOT_FOUND");
     }
 }
