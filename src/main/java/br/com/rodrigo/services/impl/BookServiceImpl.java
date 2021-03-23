@@ -45,8 +45,20 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Void delete(Long id) {
-        this.findById(id);
-        return null;
+    public void delete(Book book) {
+        if(book == null || book.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        bookRepository.delete(book);
+    }
+
+    @Override
+    public Book update(Book book) {
+        if(book == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        return bookRepository.save(book);
     }
 }

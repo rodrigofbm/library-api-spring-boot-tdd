@@ -4,6 +4,7 @@ import br.com.rodrigo.DTOs.BookDTO;
 import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -235,5 +236,58 @@ public class BookControllerTest {
         // verificacao
         mvc.perform(request)
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Should Return NotFound For Update Book")
+    public void shouldReturnNotFoundUpdateBook() throws Exception {
+        // cenario
+        Book book = Book.builder().id(1L).author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        String json = new ObjectMapper().writeValueAsString(book);
+
+        BDDMockito.given(bookService.findById(BDDMockito.anyLong()))
+                .willReturn(Optional.empty());
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(BOOK_API.concat("/" + 1))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json);
+
+        // acao/verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should Return NotFound For Update Book")
+    public void shouldReturnUpdatedBookSuccess() throws Exception {
+        // cenario
+        Long id = 1L;
+        BookDTO dto = BookDTO.builder().id(1L).author("Frank Miller").isbn("654321")
+                .title("The Dark K").build();
+        Book updatingBook = Book.builder().id(1L).author("Frank Miller").isbn("123456")
+                .title("The Dark Knight").build();
+        Book updatedBook = Book.builder().id(1L).author("Frank Miller").isbn("654321")
+                .title("The Dark K").build();
+        String json = new ObjectMapper().writeValueAsString(dto);
+
+        BDDMockito.given(bookService.findById(id))
+                .willReturn(Optional.of(updatingBook));
+        BDDMockito.given(bookService.update(updatingBook))
+                .willReturn(updatedBook);
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.put(BOOK_API.concat("/" + 1))
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(json);
+
+        // acao/verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("id").value(1L))
+                .andExpect(MockMvcResultMatchers.jsonPath("title").value("The Dark K"))
+                .andExpect(MockMvcResultMatchers.jsonPath("author").value("Frank Miller"))
+                .andExpect(MockMvcResultMatchers.jsonPath("isbn").value("654321"));
     }
 }

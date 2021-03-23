@@ -13,5 +13,7 @@ public interface BookService {
 
     Optional<Book> findById(Long any);
 
-    Void delete(Long id);
+    void delete(Book book);
+
+    Book update(Book book);
 }

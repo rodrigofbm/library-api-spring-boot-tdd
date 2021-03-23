@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.matchers.InstanceOf;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -166,19 +167,57 @@ public class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Should Return NotFound Book On Delete By Id")
-    public void shouldReturnNotFoundBookOnDeleteById() {
+    @DisplayName("Should throw BadRequest When No Book Or Id Is Provided To Delete")
+    public void shouldReturnBadRequestWhenNoBookOrIdProvidedToDelete() {
+        // Cenario
+        Book book = new Book();
+
+        // acao
+        org.junit.jupiter.api.Assertions.assertThrows(ResponseStatusException.class, () -> bookService.delete(book));
+
+        // verificacao
+        Mockito.verify(bookRepository, Mockito.never()).delete(book);
+    }
+
+    @Test
+    @DisplayName("Should Delete Book By Id")
+    public void shouldDeleteById() {
         // cenario
-        Mockito.when(bookService.findById(Mockito.anyLong()))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Book book = Book.builder().id(1l).build();
+
+        // execucao
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow( () -> bookService.delete(book) );
+
+        // verificacoes
+        Mockito.verify(bookRepository, Mockito.times(1)).delete(book);
+    }
+
+    @Test
+    @DisplayName("Should Return BadRequest For Update Book Without Param")
+    public void shouldReturnBadRequestForUpdateBookWithoutParam() {
         // acao
         Throwable response = Assertions.catchThrowable(() -> {
-            bookService.delete(1L);
+            bookService.update(null);
         });
 
-        //verificacao
+        // verificacao
         Assertions.assertThat(response)
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessage("404 NOT_FOUND");
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    @DisplayName("Should Update Book")
+    public void shouldUpdateBook() {
+        // cenario
+        Book book = Book.builder().id(1L).isbn("123456").title("The Dark K").author("Frank M.")
+                .build();
+        Mockito.when(bookRepository.save(book)).thenReturn(book);
+
+        // acao
+        Book updatedBook = bookService.update(book);
+
+        // verificacao
+        Assertions.assertThat(updatedBook.getTitle()).isEqualTo("The Dark K");
+        Assertions.assertThat(updatedBook.getAuthor()).isEqualTo("Frank M.");
     }
 }
