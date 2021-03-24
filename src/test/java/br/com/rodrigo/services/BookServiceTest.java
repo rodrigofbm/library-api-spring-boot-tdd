@@ -14,6 +14,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.matchers.InstanceOf;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -219,5 +223,26 @@ public class BookServiceTest {
         // verificacao
         Assertions.assertThat(updatedBook.getTitle()).isEqualTo("The Dark K");
         Assertions.assertThat(updatedBook.getAuthor()).isEqualTo("Frank M.");
+    }
+
+    @Test
+    @DisplayName("Should Return A Pageable List Of Books")
+    public void shouldReturnPageableListOfBooks() {
+        // cenario
+        Book book = Book.builder().title("The Dark Knight").author("Frank Miller").build();
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Page<Book> page = new PageImpl(Arrays.asList(book), pageRequest, 1);
+
+        Mockito.when(bookRepository.findAll(Mockito.any(Example.class), Mockito.any(PageRequest.class)))
+                .thenReturn(page);
+
+        // acao
+        Page<Book> books = bookService.find(book, pageRequest);
+
+        // verificacao
+        Assertions.assertThat(books.getTotalElements()).isEqualTo(1);
+        Assertions.assertThat(books.getContent()).isEqualTo(Arrays.asList(book));
+        Assertions.assertThat(books.getPageable().getPageNumber()).isEqualTo(0);
+        Assertions.assertThat(books.getPageable().getPageSize()).isEqualTo(10);
     }
 }

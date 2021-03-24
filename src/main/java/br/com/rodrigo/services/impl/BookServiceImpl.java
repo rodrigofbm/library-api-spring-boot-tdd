@@ -4,6 +4,10 @@ import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
 import br.com.rodrigo.model.repositories.BookRepository;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -60,5 +64,17 @@ public class BookServiceImpl implements BookService {
         }
 
         return bookRepository.save(book);
+    }
+
+    @Override
+    public Page<Book> find(Book book, Pageable params) {
+        Example<Book> example = Example.of(book,
+                ExampleMatcher
+                        .matching()
+                        .withIgnoreCase()
+                        .withIgnoreNullValues()
+                        .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING));
+
+        return bookRepository.findAll(example, params);
     }
 }

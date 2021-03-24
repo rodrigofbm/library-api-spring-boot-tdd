@@ -1,12 +1,14 @@
 package br.com.rodrigo.controllers;
 
 import br.com.rodrigo.DTOs.BookDTO;
-import br.com.rodrigo.arguments.book.GetBookResponse;
 import br.com.rodrigo.exceptions.ApiErrors;
 import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -15,8 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
@@ -45,11 +47,14 @@ public class BookController {
     }
 
     @GetMapping
-    public ResponseEntity<GetBookResponse> getAll() {
-        List<Book> books = bookService.findAll();
-        List<BookDTO> dtos = Arrays.asList(mapper.map(books, BookDTO[].class));
+    public ResponseEntity<Page<BookDTO>> find(BookDTO book, Pageable params) {
+        Page<Book> results = bookService.find(mapper.map(book, Book.class), params);
+        List<BookDTO> books = results.getContent().stream()
+                .map(entity -> mapper.map(entity, BookDTO.class))
+                .collect(Collectors.toList());
+        Page<BookDTO> response = new PageImpl<>(books, params, results.getTotalElements());
 
-        return new ResponseEntity<>(new GetBookResponse(dtos), HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("{id}")

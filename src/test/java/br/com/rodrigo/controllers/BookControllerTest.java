@@ -4,7 +4,6 @@ import br.com.rodrigo.DTOs.BookDTO;
 import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -24,8 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -106,58 +105,6 @@ public class BookControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("errors", Matchers.hasSize(1)))
                 .andExpect(MockMvcResultMatchers.jsonPath("errors[0]")
                         .value("ISBN already exists"));
-    }
-
-    @Test
-    @DisplayName("Should return a empty list of Books")
-    public void shouldReturnEmptyListOfBooks() throws Exception {
-        // acao/verificacao
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON);
-
-        mvc.perform(request)
-            .andExpect(MockMvcResultMatchers.status().isOk())
-            .andExpect(MockMvcResultMatchers.jsonPath("books").isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return a not empty list of Books")
-    public void shouldReturnNotEmptyListOfBooks() throws Exception {
-        // cenario
-        Book book1 = Book.builder().id(1L).author("Frank Miller").isbn("123456")
-                .title("The Dark Knight").build();
-        Book book2 = Book.builder().id(2L).author("Frank Miller").isbn("123458")
-                .title("The Dark Knight Rises").build();
-
-        BDDMockito.given(bookService.findAll()).willReturn(Arrays.asList(book1, book2));
-
-        // acao/verificacao
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON);
-
-        mvc.perform(request)
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("books").isNotEmpty())
-                .andExpect(MockMvcResultMatchers.jsonPath("books", Matchers.hasSize(2)))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[0].id")
-                        .value(1L))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[0].title")
-                        .value("The Dark Knight"))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[0].author")
-                        .value("Frank Miller"))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[0].isbn")
-                        .value("123456"))
-
-                .andExpect(MockMvcResultMatchers.jsonPath("books[1].id")
-                        .value(2L))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[1].title")
-                        .value("The Dark Knight Rises"))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[1].author")
-                        .value("Frank Miller"))
-                .andExpect(MockMvcResultMatchers.jsonPath("books[1].isbn")
-                        .value("123458"));
     }
 
     @Test
@@ -289,5 +236,29 @@ public class BookControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("title").value("The Dark K"))
                 .andExpect(MockMvcResultMatchers.jsonPath("author").value("Frank Miller"))
                 .andExpect(MockMvcResultMatchers.jsonPath("isbn").value("654321"));
+    }
+
+    @Test
+    @DisplayName("Should Return List Of Filtered Books")
+    public void shouldReturnListOfFilteredBooks() throws Exception {
+        // cenario
+        Book bookToReturn = Book.builder().id(1L).author("Frank Miller").title("The Dark Knight").isbn("123").build();
+        String queryParams = String.format(
+                "?title=%s&author=%s&page=0&size=100", bookToReturn.getTitle(), bookToReturn.getAuthor());
+
+        BDDMockito.given(bookService.find(BDDMockito.any(Book.class), BDDMockito.any(Pageable.class)))
+                .willReturn(new PageImpl<Book>(
+                        Arrays.asList(bookToReturn), PageRequest.of(0, 100), 1));
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.get(BOOK_API.concat(queryParams))
+                .accept(MediaType.APPLICATION_JSON);
+
+        // acao/verificacao
+        mvc.perform(request)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("content", Matchers.hasSize(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("totalElements").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("pageable.pageSize").value(100))
+                .andExpect(MockMvcResultMatchers.jsonPath("pageable.pageNumber").value(0));
     }
 }
