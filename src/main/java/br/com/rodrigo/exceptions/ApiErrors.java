@@ -1,6 +1,7 @@
 package br.com.rodrigo.exceptions;
 
 import org.springframework.validation.BindingResult;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,10 @@ public class ApiErrors {
 
     public ApiErrors(RuntimeException exception) {
         errors = Arrays.asList(exception.getMessage());
+    }
+
+    public ApiErrors(ResponseStatusException exception) {
+        errors = Arrays.asList(exception.getReason());
     }
 
     public List<String> getErrors() {

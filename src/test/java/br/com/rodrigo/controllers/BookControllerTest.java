@@ -30,7 +30,7 @@ import java.util.*;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
-@WebMvcTest
+@WebMvcTest(BookController.class)
 @AutoConfigureMockMvc
 public class BookControllerTest {
     private static String BOOK_API = "/api/books";

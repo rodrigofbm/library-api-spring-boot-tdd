@@ -77,4 +77,9 @@ public class BookServiceImpl implements BookService {
 
         return bookRepository.findAll(example, params);
     }
+
+    @Override
+    public Optional<Book> findBookByIsbn(String isbn) {
+        return null;
+    }
 }

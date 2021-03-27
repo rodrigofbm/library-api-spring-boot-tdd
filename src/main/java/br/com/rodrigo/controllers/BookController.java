@@ -1,8 +1,6 @@
 package br.com.rodrigo.controllers;
 
 import br.com.rodrigo.DTOs.BookDTO;
-import br.com.rodrigo.exceptions.ApiErrors;
-import br.com.rodrigo.exceptions.BusinessRuleException;
 import br.com.rodrigo.model.entity.Book;
 import br.com.rodrigo.services.BookService;
 import org.modelmapper.ModelMapper;
@@ -11,8 +9,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -77,20 +73,5 @@ public class BookController {
                     return new ResponseEntity<>(mapper.map(book, BookDTO.class), HttpStatus.OK);
                 })
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrors> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        BindingResult bindingResult = ex.getBindingResult();
-
-        return new ResponseEntity<>(new ApiErrors(bindingResult), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(BusinessRuleException.class)
-    public ResponseEntity<ApiErrors> handleBusinessRuleException(BusinessRuleException ex) {
-
-        return new ResponseEntity<>(
-                new ApiErrors(new BusinessRuleException("ISBN already exists")),
-                HttpStatus.BAD_REQUEST);
     }
 }
