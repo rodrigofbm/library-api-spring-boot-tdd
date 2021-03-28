@@ -245,4 +245,22 @@ public class BookServiceTest {
         Assertions.assertThat(books.getPageable().getPageNumber()).isEqualTo(0);
         Assertions.assertThat(books.getPageable().getPageSize()).isEqualTo(10);
     }
+
+    @Test
+    @DisplayName("Should Return Book With Given Isbn")
+    public void shouldReturnBookWithGivenIsbn() {
+        String isbn = "1230";
+        Book book = Book.builder().id(1L).isbn(isbn).build();
+
+        Mockito.when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.of(book));
+
+        // acao
+        Optional<Book> foundedBook = bookService.findBookByIsbn("1230");
+
+        Assertions.assertThat(foundedBook).isPresent();
+        Assertions.assertThat(foundedBook.get().getId()).isEqualTo(1L);
+        Assertions.assertThat(foundedBook.get().getIsbn()).isEqualTo("1230");
+
+        Mockito.verify(bookRepository, Mockito.times(1)).findByIsbn("1230");
+    }
 }

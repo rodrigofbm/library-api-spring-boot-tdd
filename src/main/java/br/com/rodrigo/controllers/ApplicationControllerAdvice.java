@@ -23,7 +23,7 @@ public class ApplicationControllerAdvice {
     public ResponseEntity<ApiErrors> handleBusinessRuleException(BusinessRuleException ex) {
 
         return new ResponseEntity<>(
-                new ApiErrors(new BusinessRuleException("ISBN already exists")),
+                new ApiErrors(ex),
                 HttpStatus.BAD_REQUEST);
     }
 

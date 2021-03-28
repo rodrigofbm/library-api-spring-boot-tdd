@@ -63,15 +63,13 @@ public class BookController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<BookDTO> update(@PathVariable Long id, @RequestBody @Valid BookDTO dto) {
-        return bookService.findById(id)
-                .map(book -> {
-                    book.setAuthor(dto.getAuthor());
-                    book.setTitle(dto.getTitle());
-                    book = bookService.update(book);
+    public BookDTO update( @PathVariable Long id, @RequestBody @Valid BookDTO dto){
+        return bookService.findById(id).map( book -> {
+            book.setAuthor(dto.getAuthor());
+            book.setTitle(dto.getTitle());
+            book = bookService.update(book);
 
-                    return new ResponseEntity<>(mapper.map(book, BookDTO.class), HttpStatus.OK);
-                })
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+            return mapper.map(book, BookDTO.class);
+        }).orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND) );
     }
 }
